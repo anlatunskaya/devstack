@@ -1,0 +1,97 @@
+# lib/ledger
+# Functions to control the configuration and operation of the ledger service
+
+# Dependencies:
+# ``functions`` file
+# ``BASE_SQL_CONN``
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# install_ledger
+# configure_ledger
+# init_ledger
+# start_ledger
+# stop_ledger
+# cleanup_ledger
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set +o xtrace
+
+
+# Defaults
+# --------
+
+# <define global variables here that belong to this project>
+
+# Set up default directories
+LEDGER_DIR=$DEST/ledger
+LEDGER_CONF_DIR=/etc/ledger
+LEDGER_CONF=$LEDGER_CONF_DIR/ledger.conf
+
+LEDGERCLIENT_DIR=$DEST/python-ledgerclient
+
+
+# Entry Points
+# ------------
+
+# cleanup_ledger() - Remove residual data files, anything left over from previous
+# runs that a clean run would need to clean up
+function cleanup_ledger() {
+    :
+}
+
+# configure_ledgerclient() - Set config files, create data dirs, etc
+function configure_ledgerclient() {
+    setup_develop $LEDGERCLIENT_DIR
+}
+
+# configure_ledger() - Set config files, create data dirs, etc
+function configure_ledger() {
+    setup_develop $LEDGER_DIR
+    
+    if [[ ! -d $LEDGER_CONF_DIR ]]; then
+        sudo mkdir -p $LEDGER_CONF_DIR
+        sudo chown `whoami` $LEDGER_CONF_DIR
+    fi
+
+    if [[ "$LEDGER_CONF_DIR" != "$LEDGER_DIR/etc" ]]; then
+        cp -p $LEDGER_DIR/etc/ledger.conf $LEDGER_CONF
+    fi
+
+    # Rewrite stock ``ledger.conf``
+    iniset $LEDGER_CONF ledger sql_connection "$BASE_SQL_CONN/ledger?charset=utf8"
+}
+
+# init_ledger() - Initialize databases, etc.
+function init_ledger() {
+    # (Re)create ledger database
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'DROP DATABASE IF EXISTS ledger;'
+    mysql -u$MYSQL_USER -p$MYSQL_PASSWORD -e 'CREATE DATABASE ledger CHARACTER SET utf8;'
+
+    # Initialize ledger database
+    ledger-manage db-sync
+}
+
+# install_ledgerclient() - Collect source and prepare
+function install_ledgerclient() {
+    git_clone $LEDGERCLIENT_REPO $LEDGERCLIENT_DIR $LEDGERCLIENT_BRANCH
+}
+
+# install_ledger() - Collect source and prepare
+function install_ledger() {
+    git_clone $LEDGER_REPO $LEDGER_DIR $LEDGER_BRANCH
+}
+
+# start_ledger() - Start running processes, including screen
+function start_ledger() {
+    :
+}
+
+# stop_ledger() - Stop running processes (non-screen)
+function stop_ledger() {
+    :
+}
+
+# Restore xtrace
+$XTRACE

@@ -405,6 +405,10 @@ function install_nova() {
     fi
 
     git_clone $NOVA_REPO $NOVA_DIR $NOVA_BRANCH
+
+    if is_service_enabled lg; then
+        rm -rfv $NOVA_DIR/ledger
+    fi
 }
 
 # start_nova() - Start running processes, including screen

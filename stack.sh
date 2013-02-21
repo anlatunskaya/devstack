@@ -306,6 +306,7 @@ SERVICE_TIMEOUT=${SERVICE_TIMEOUT:-60}
 
 # Get project function libraries
 source $TOP_DIR/lib/keystone
+source $TOP_DIR/lib/ledger
 source $TOP_DIR/lib/glance
 source $TOP_DIR/lib/nova
 source $TOP_DIR/lib/cinder
@@ -818,6 +819,7 @@ pip_install $(get_packages $FILES/pips | sort -u)
 echo_summary "Installing OpenStack project source"
 
 install_keystoneclient
+install_ledgerclient
 install_glanceclient
 install_novaclient
 
@@ -838,6 +840,9 @@ if is_service_enabled swift; then
         # swift3 middleware to provide S3 emulation to Swift
         git_clone $SWIFT3_REPO $SWIFT3_DIR $SWIFT3_BRANCH
     fi
+fi
+if is_service_enabled lg; then
+    install_ledger
 fi
 if is_service_enabled g-api n-api; then
     # image catalog service
@@ -881,6 +886,7 @@ echo_summary "Configuring OpenStack projects"
 # Set up our checkouts so they are installed into python path
 # allowing ``import nova`` or ``import glance.client``
 configure_keystoneclient
+configure_ledgerclient
 configure_novaclient
 setup_develop $OPENSTACKCLIENT_DIR
 if is_service_enabled key g-api n-api swift; then
@@ -892,6 +898,9 @@ if is_service_enabled swift; then
 fi
 if is_service_enabled swift3; then
     setup_develop $SWIFT3_DIR
+fi
+if is_service_enabled lg; then
+    configure_ledger
 fi
 if is_service_enabled g-api n-api; then
     configure_glance
@@ -1102,6 +1111,16 @@ if is_service_enabled horizon; then
     \" $FILES/apache-horizon.template >/etc/$APACHE_NAME/$APACHE_CONF"
 
     restart_service $APACHE_NAME
+fi
+
+
+# Ledger
+# ------
+
+if is_service_enabled lg; then
+    echo_summary "Configuring Ledger"
+
+    init_ledger
 fi
 
 

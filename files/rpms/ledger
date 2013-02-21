@@ -1,0 +1,10 @@
+python-sqlalchemy
+python-mysqldb
+python-migrate
+python-eventlet
+python-iso8601
+python-setuptools
+python-webob
+python-eventlet
+sqlite3
+mysql-server # NOPRIME
